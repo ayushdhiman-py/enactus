@@ -14,7 +14,7 @@ const Home = () => {
   const [email, setEmail] = useState("");
   const [phno, setphno] = useState("");
   const [ticket, setTicket] = useState("");
-  const [quantity, setQuantity] = useState("");
+  const [quantity, setQuantity] = useState(0);
   const [paymentid, setpaymentid] = useState();
 
   let total = ticket * quantity;
@@ -65,7 +65,7 @@ const Home = () => {
     });
   };
 
-  const displayRazorpay = async (price) => {
+  const displayRazorpay = async (amount) => {
     const res = await loadScript(
       "https://checkout.razorpay.com/v1/checkout.js"
     );
@@ -74,11 +74,12 @@ const Home = () => {
       alert("You are offline... Failed to load Razorpay SDK");
       return;
     }
+    console.log(amount)
 
     const options = {
       key: "rzp_live_G32ZAvGvUcvt5J",
       currency: "INR",
-      price: price * 100,
+      amount: amount * 100,
       name: "Enactus IITM",
       description: "Fall Fest",
       handler: function (response) {
@@ -91,7 +92,7 @@ const Home = () => {
           console.log(localStorage.getItem("paymentdone"));
         } else {
           console.log(localStorage.getItem("paymentdone"), ": payment done");
-          console.log(price);
+          console.log(amount);
           localStorage.getItem("paymentdone") === "true"
             ? sendData()
             : console.log("paymentnotdone");
@@ -113,7 +114,7 @@ const Home = () => {
     e.preventDefault();
     const price = total;
     console.log(price);
-    displayRazorpay();
+    displayRazorpay(price);
   };
 
   return (
@@ -144,35 +145,23 @@ const Home = () => {
 
         <label>Choose Ticket</label>
         <select name="ticket" onChange={handleTicketChange}>
-          <option value="1">ticket 1</option>
-          <option value="2">ticket 2</option>
-          <option value="3">ticket 3</option>
-          <option value="4">ticket 4</option>
+          <option value="10">ticket 1</option>
+          <option value="20">ticket 2</option>
+          <option value="30">ticket 3</option>
+          <option value="40">ticket 4</option>
         </select>
 
         <label>Choose Quantity</label>
         <input
           type="number"
           min="0"
-          placeholder="0"
+          placeholder="1"
           id=""
           onChange={handleQuantityChange}
         />
         <h1>Total : {`${total}`} </h1>
         <button type="submit">Submit</button>
       </form>
-      {/* <button>
-        <Razorpay
-          btnText="Buy your tickets"
-          name={name}
-          email={email}
-          phno={phno}
-          ticket={ticket}
-          quantity={quantity}
-          total={total}
-          style={{ width: "20px" }}
-        />
-      </button> */}
     </>
   );
 };
