@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./Home.css";
 import { fs } from "../config/config";
-import Razorpay from "./Razorpay";
 
 const Home = () => {
   function handleTicketChange(event) {
@@ -16,14 +15,14 @@ const Home = () => {
   const [phno, setphno] = useState("");
   const [ticket, setTicket] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [paymentid, setpaymentid] = useState();
 
   let total = ticket * quantity;
   const cart = fs.collection("contacts");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    localStorage.setItem("Phone",phno)
-    localStorage.setItem("Email",email)
+  const sendData = () => {
+    localStorage.setItem("Phone", phno);
+    localStorage.setItem("Email", email);
     cart
       .doc(`${name} ${phno}`)
       .set({
@@ -31,12 +30,12 @@ const Home = () => {
         email: email,
         phone_number: phno,
         ticket: ticket,
+        quantity: quantity,
+        paymentid: paymentid,
       })
       .then(() => {
         alert("Your message has been submitted👍");
-        {
-          console.log("here");
-        }
+        console.log("heXre");
       })
       .catch((error) => {
         alert(error.message);
@@ -47,6 +46,74 @@ const Home = () => {
     setTicket("");
     setQuantity("");
     setphno("");
+  };
+
+  const loadScript = (src) => {
+    return new Promise((resovle) => {
+      const script = document.createElement("script");
+      script.src = src;
+
+      script.onload = () => {
+        resovle(true);
+      };
+
+      script.onerror = () => {
+        resovle(false);
+      };
+
+      document.body.appendChild(script);
+    });
+  };
+
+  const displayRazorpay = async (price) => {
+    const res = await loadScript(
+      "https://checkout.razorpay.com/v1/checkout.js"
+    );
+
+    if (!res) {
+      alert("You are offline... Failed to load Razorpay SDK");
+      return;
+    }
+
+    const options = {
+      key: "rzp_live_G32ZAvGvUcvt5J",
+      currency: "INR",
+      price: price * 100,
+      name: "Enactus IITM",
+      description: "Fall Fest",
+      handler: function (response) {
+        setpaymentid(response.razorpay_payment_id);
+        console.log(response);
+        alert("Payment Successfully");
+        localStorage.setItem("paymentdone", true);
+        if (total) {
+          localStorage.setItem("paymentdone", false);
+          console.log(localStorage.getItem("paymentdone"));
+        } else {
+          console.log(localStorage.getItem("paymentdone"), ": payment done");
+          console.log(price);
+          localStorage.getItem("paymentdone") === "true"
+            ? sendData()
+            : console.log("paymentnotdone");
+          localStorage.setItem("paymentdone", false);
+          console.log(localStorage.getItem("paymentdone"));
+        }
+      },
+      prefill: {
+        contact: localStorage.getItem("Phone"),
+        email: localStorage.getItem("Email"),
+      },
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const price = total;
+    console.log(price);
+    displayRazorpay();
   };
 
   return (
@@ -94,7 +161,7 @@ const Home = () => {
         <h1>Total : {`${total}`} </h1>
         <button type="submit">Submit</button>
       </form>
-      <button>
+      {/* <button>
         <Razorpay
           btnText="Buy your tickets"
           name={name}
@@ -105,7 +172,7 @@ const Home = () => {
           total={total}
           style={{ width: "20px" }}
         />
-      </button>
+      </button> */}
     </>
   );
 };
